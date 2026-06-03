@@ -1,0 +1,36 @@
+<?php
+
+namespace App\Http\Controllers;
+
+use App\Http\Requests\StoreProjectRequest;
+use App\Http\Resources\ProjectResource;
+use App\Models\Project;
+use Illuminate\Http\JsonResponse;
+
+class ProjectController extends Controller
+{
+    public function index(): JsonResponse
+    {
+        $projects = Project::withCount('tasks')->cursorPaginate(15);
+        $paginated = ProjectResource::collection($projects)->response()->getData(true);
+
+        return response()->json([
+            'message' => 'Projetos listados com sucesso.',
+            'code'    => 200,
+            'data'    => $paginated['data'],
+            'meta'    => $paginated['meta'] ?? null,
+            'links'   => $paginated['links'] ?? null,
+        ], 200);
+    }
+
+    public function store(StoreProjectRequest $request): JsonResponse
+    {
+        $project = Project::create($request->validated());
+
+        return response()->json([
+            'message' => 'Projeto criado com sucesso.',
+            'code'    => 201,
+            'data'    => new ProjectResource($project),
+        ], 201);
+    }
+}
