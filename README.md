@@ -7,7 +7,7 @@ API RESTful em Laravel 12 com SPA Vue 3 + Tailwind 4 integrada via Vite.
 ## Estrutura
 
 ```
-task-manager-test/      # raiz = projecto Laravel
+task-manager-test/      # raiz = projeto Laravel
 ├── app/
 ├── resources/
 │   ├── css/            # Tailwind 4
@@ -50,7 +50,7 @@ npm run dev
 API disponível em `http://localhost:8000`.
 Frontend disponível em `http://localhost:5173`.
 
-> SQLite por defeito. Para MySQL, editar `DB_CONNECTION` e as variáveis `DB_*` no `.env`.
+> SQLite por padrão. Para MySQL, editar `DB_CONNECTION` e as variáveis `DB_*` no `.env`.
 
 ---
 
@@ -74,7 +74,7 @@ Frontend disponível em `http://localhost:5173`.
 | `status` | `?status=todo` | Filtra pelo status |
 | `priority` | `?priority=high` | Filtra pela prioridade |
 | `overdue` | `?overdue=true` | Apenas tarefas em atraso |
-| `due_date` | `?due_date=2026-06-10` | Filtra por data exacta |
+| `due_date` | `?due_date=2026-06-10` | Filtra por data exata |
 
 ### Formato de resposta
 
@@ -101,17 +101,19 @@ php vendor/bin/pest
 
 ## Decisões técnicas
 
-**SQLite por pragmatismo** — sem necessidade de configurar servidor de BD para correr o projeto.
+**SQLite por pragmatismo** — sem necessidade de configurar servidor de BD; o foco do projeto é o código, não a infra.
 
-**Enums PHP nativos** — `ProjectStatus`, `TaskStatus` e `TaskPriority` são backed enums com cast directo no model.
+**Enums PHP nativos** — `ProjectStatus`, `TaskStatus` e `TaskPriority` são backed enums com cast direto no model; valores inválidos são rejeitados antes de chegar à BD.
 
-**Envelope de resposta `{ message, code, data }`** — todas as respostas seguem o mesmo formato para garantir consistência no cliente.
+**Envelope de resposta `{ message, code, data }`** — formato uniforme em todos os endpoints para que o cliente saiba sempre onde estão os dados, a mensagem e o código.
 
-**`BaseResource` com `only()`** — reutiliza o mesmo resource em contextos diferentes (lista vs detalhe) sem classes duplicadas.
+**`BaseResource` com `only()`** — um único resource serve contextos diferentes (lista vs detalhe) sem duplicar classes.
 
-**`FilterTaskRequest` em endpoint GET** — validação de query parameters via Form Request, centralizada e reutilizável.
+**`FilterTaskRequest` em endpoint GET** — Form Request em endpoint de leitura mantém a validação centralizada e o controller limpo.
 
-**Pest em vez de PHPUnit directo** — construído sobre PHPUnit, com sintaxe mais expressiva.
+**Pest em vez de PHPUnit direto** — construído sobre PHPUnit (satisfaz o requisito), com sintaxe mais legível.
+
+**`Route::fallback` para SPA** — só ativa quando nenhuma outra rota Laravel corresponde, sem depender da ordem de declaração.
 
 ---
 
