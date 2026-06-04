@@ -1,5 +1,5 @@
 <template>
-    <div class="min-h-screen bg-[#F8F8F8]">
+    <div class="min-h-screen">
         <header class="bg-white border-b border-gray-100 sticky top-0 z-40">
             <div class="max-w-6xl mx-auto px-4 sm:px-6 h-14 flex items-center gap-3">
                 <RouterLink to="/" class="font-semibold text-gray-900 hover:text-primary transition-colors text-sm">

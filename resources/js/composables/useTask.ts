@@ -2,19 +2,21 @@ import axios from 'axios'
 import { storeToRefs } from 'pinia'
 import { useTaskStore } from '../stores/tasks'
 import { useProjectStore } from '../stores/projects'
-import type { Task, TaskFilters } from '../types'
+import { useToast } from './useToast'
+import type { Task, TaskFilters, ApiResponse, PaginatedResponse } from '../types'
 
 export function useTask() {
     const store = useTaskStore()
     const projectStore = useProjectStore()
     const { tasks, loading, error } = storeToRefs(store)
+    const toast = useToast()
 
     async function fetchTasks(projectId: number, filters: TaskFilters = {}): Promise<void> {
         store.loading = true
         store.error = null
         try {
             const params = { ...filters, ...(filters.overdue ? { overdue: 1 } : {}) }
-            const { data } = await axios.get(`/api/projects/${projectId}/tasks`, { params })
+            const { data } = await axios.get<PaginatedResponse<Task>>(`/api/projects/${projectId}/tasks`, { params })
             store.setTasks(data.data)
         } catch (e: any) {
             store.error = e.response?.data?.message ?? 'Erro ao carregar tarefas.'
@@ -27,12 +29,12 @@ export function useTask() {
         store.loading = true
         store.error = null
         try {
-            const { data } = await axios.post(`/api/projects/${projectId}/tasks`, payload)
+            const { data } = await axios.post<ApiResponse<Task>>(`/api/projects/${projectId}/tasks`, payload)
             store.addTask(data.data)
             projectStore.incrementTaskCount(projectId)
+            toast.show('Tarefa criada.')
             return data.data
         } catch (e: any) {
-            store.error = e.response?.data?.message ?? 'Erro ao criar tarefa.'
             throw e
         } finally {
             store.loading = false
@@ -40,13 +42,16 @@ export function useTask() {
     }
 
     async function updateTask(taskId: number, payload: Partial<Pick<Task, 'status' | 'priority'>>): Promise<Task> {
+        const original = store.tasks.find(t => t.id === taskId)
+        if (original) store.updateTask(taskId, payload)
         store.error = null
         try {
-            const { data } = await axios.patch(`/api/tasks/${taskId}`, payload)
+            const { data } = await axios.patch<ApiResponse<Task>>(`/api/tasks/${taskId}`, payload)
             store.updateTask(taskId, data.data)
             return data.data
         } catch (e: any) {
-            store.error = e.response?.data?.message ?? 'Erro ao atualizar tarefa.'
+            if (original) store.updateTask(taskId, original)
+            toast.show(e.response?.data?.message ?? 'Erro ao atualizar tarefa.', 'error')
             throw e
         }
     }
@@ -58,6 +63,7 @@ export function useTask() {
             await axios.delete(`/api/tasks/${taskId}`)
             store.removeTask(taskId)
             if (task) projectStore.decrementTaskCount(task.project_id)
+            toast.show('Tarefa eliminada.')
         } catch (e: any) {
             store.error = e.response?.data?.message ?? 'Erro ao eliminar tarefa.'
             throw e

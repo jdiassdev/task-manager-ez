@@ -12,6 +12,7 @@
     --font-mono: 'Overpass Mono', ui-monospace, monospace;
 
     --color-primary: #C800DF;
+    --color-primary-hover: #a800b8;
     --color-secondary: #E60076;
     --color-success: #16A34A;
     --color-warning: #D97706;
@@ -29,3 +30,13 @@
         color: #111827;
     }
 }
+
+.toast-enter-active { transition: opacity 0.2s ease, transform 0.2s ease; }
+.toast-leave-active { transition: opacity 0.15s ease, transform 0.15s ease; }
+.toast-enter-from  { opacity: 0; transform: translateX(16px); }
+.toast-leave-to    { opacity: 0; transform: translateX(16px); }
+
+.task-enter-active { transition: opacity 0.2s ease, transform 0.2s ease; }
+.task-leave-active { transition: opacity 0.15s ease; }
+.task-enter-from   { opacity: 0; transform: translateY(-6px); }
+.task-leave-to     { opacity: 0; }

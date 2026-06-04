@@ -50,7 +50,7 @@
                     <button
                         type="submit"
                         :disabled="loading"
-                        class="px-4 py-2 text-sm font-medium text-white bg-primary rounded-sm hover:bg-[#a800b8] disabled:opacity-50 transition-colors"
+                        class="px-4 py-2 text-sm font-medium text-white bg-primary rounded-sm hover:bg-primary-hover disabled:opacity-50 transition-colors"
                     >
                         {{ loading ? 'A criar...' : 'Criar projeto' }}
                     </button>

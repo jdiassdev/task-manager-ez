@@ -115,6 +115,10 @@ php vendor/bin/pest
 
 **`Route::fallback` para SPA** — só ativa quando nenhuma outra rota Laravel corresponde, sem depender da ordem de declaração.
 
+**`useToast` com `ref` de módulo** — em vez de criar uma store Pinia só para toasts, o `ref` é declarado fora da função do composable, tornando-o um singleton partilhado por toda a app. Qualquer componente que chame `useToast()` acede ao mesmo array de toasts. O `ToastContainer` usa `Teleport` para renderizar diretamente no `<body>`, evitando problemas de `z-index` causados por stacking contexts intermédios.
+
+**Optimistic updates em `updateTask`** — o status da tarefa é atualizado no store antes de a API responder, eliminando latência percebida. Se o pedido falhar, o estado anterior é restaurado e um toast de erro é exibido.
+
 ---
 
 ## O que ficou por implementar
