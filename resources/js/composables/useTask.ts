@@ -1,17 +1,20 @@
 import axios from 'axios'
 import { storeToRefs } from 'pinia'
 import { useTaskStore } from '../stores/tasks'
+import { useProjectStore } from '../stores/projects'
 import type { Task, TaskFilters } from '../types'
 
 export function useTask() {
     const store = useTaskStore()
+    const projectStore = useProjectStore()
     const { tasks, loading, error } = storeToRefs(store)
 
     async function fetchTasks(projectId: number, filters: TaskFilters = {}): Promise<void> {
         store.loading = true
         store.error = null
         try {
-            const { data } = await axios.get(`/api/projects/${projectId}/tasks`, { params: filters })
+            const params = { ...filters, ...(filters.overdue ? { overdue: 1 } : {}) }
+            const { data } = await axios.get(`/api/projects/${projectId}/tasks`, { params })
             store.setTasks(data.data)
         } catch (e: any) {
             store.error = e.response?.data?.message ?? 'Erro ao carregar tarefas.'
@@ -26,6 +29,7 @@ export function useTask() {
         try {
             const { data } = await axios.post(`/api/projects/${projectId}/tasks`, payload)
             store.addTask(data.data)
+            projectStore.incrementTaskCount(projectId)
             return data.data
         } catch (e: any) {
             store.error = e.response?.data?.message ?? 'Erro ao criar tarefa.'
@@ -48,10 +52,12 @@ export function useTask() {
     }
 
     async function deleteTask(taskId: number): Promise<void> {
+        const task = store.tasks.find(t => t.id === taskId)
         store.error = null
         try {
             await axios.delete(`/api/tasks/${taskId}`)
             store.removeTask(taskId)
+            if (task) projectStore.decrementTaskCount(task.project_id)
         } catch (e: any) {
             store.error = e.response?.data?.message ?? 'Erro ao eliminar tarefa.'
             throw e

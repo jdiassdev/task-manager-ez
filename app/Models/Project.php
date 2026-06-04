@@ -17,6 +17,10 @@ class Project extends Model
         'status',
     ];
 
+    protected $attributes = [
+        'status' => 'active',
+    ];
+
     protected $casts = [
         'status' => ProjectStatus::class,
     ];

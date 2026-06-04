@@ -15,5 +15,15 @@ export const useProjectStore = defineStore('projects', () => {
         projects.value.unshift(project)
     }
 
-    return { projects, loading, error, setProjects, addProject }
+    function incrementTaskCount(projectId: number) {
+        const project = projects.value.find(p => p.id === projectId)
+        if (project) project.tasks_count++
+    }
+
+    function decrementTaskCount(projectId: number) {
+        const project = projects.value.find(p => p.id === projectId)
+        if (project && project.tasks_count > 0) project.tasks_count--
+    }
+
+    return { projects, loading, error, setProjects, addProject, incrementTaskCount, decrementTaskCount }
 })

@@ -3,8 +3,8 @@ import ProjectList from '../views/ProjectList.vue'
 import ProjectDetail from '../views/ProjectDetail.vue'
 
 const routes = [
-    { path: '/', component: ProjectList },
-    { path: '/projects/:id', component: ProjectDetail },
+    { path: '/', name: 'project-list', component: ProjectList },
+    { path: '/projects/:id', name: 'project-detail', component: ProjectDetail },
 ]
 
 export default createRouter({

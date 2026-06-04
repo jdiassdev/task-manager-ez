@@ -30,7 +30,7 @@ class ProjectController extends Controller
         return response()->json([
             'message' => 'Projeto criado com sucesso.',
             'code'    => 201,
-            'data'    => new ProjectResource($project),
+            'data'    => (new ProjectResource($project->loadCount('tasks')))->only(['id', 'name', 'description', 'status', 'tasks_count']),
         ], 201);
     }
 }
