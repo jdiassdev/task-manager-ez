@@ -101,7 +101,7 @@ php vendor/bin/pest
 
 ## Decisões técnicas
 
-**SQLite por defeito** — elimina a necessidade de configurar servidor de BD para correr o projeto.
+**SQLite por pragmatismo** — sem necessidade de configurar servidor de BD para correr o projeto.
 
 **Enums PHP nativos** — `ProjectStatus`, `TaskStatus` e `TaskPriority` são backed enums com cast directo no model.
 
