@@ -1,16 +1,17 @@
 import { ref } from 'vue'
 import { defineStore } from 'pinia'
+import type { Project } from '../types'
 
 export const useProjectStore = defineStore('projects', () => {
-    const projects = ref([])
+    const projects = ref<Project[]>([])
     const loading = ref(false)
-    const error = ref(null)
+    const error = ref<string | null>(null)
 
-    function setProjects(data) {
+    function setProjects(data: Project[]) {
         projects.value = data
     }
 
-    function addProject(project) {
+    function addProject(project: Project) {
         projects.value.unshift(project)
     }
 
