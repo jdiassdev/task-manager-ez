@@ -2,7 +2,7 @@ import axios from 'axios'
 import { storeToRefs } from 'pinia'
 import { useProjectStore } from '../stores/projects'
 import { useToast } from './useToast'
-import type { Project, ApiResponse, PaginatedResponse } from '../types'
+import type { Project, ProjectStatus, ApiResponse, PaginatedResponse } from '../types'
 
 export function useProjects() {
     const store = useProjectStore()
@@ -37,5 +37,17 @@ export function useProjects() {
         }
     }
 
-    return { projects, loading, error, fetchProjects, createProject }
+    async function archiveProject(projectId: number, status: ProjectStatus): Promise<Project> {
+        try {
+            const { data } = await axios.patch<ApiResponse<Project>>(`/api/projects/${projectId}`, { status })
+            store.updateProject(projectId, data.data)
+            toast.show(status === 'archived' ? 'Projeto arquivado.' : 'Projeto restaurado.')
+            return data.data
+        } catch (e: any) {
+            toast.show(e.response?.data?.message ?? 'Erro ao atualizar projeto.', 'error')
+            throw e
+        }
+    }
+
+    return { projects, loading, error, fetchProjects, createProject, archiveProject }
 }

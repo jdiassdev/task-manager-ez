@@ -25,5 +25,10 @@ export const useProjectStore = defineStore('projects', () => {
         if (project && project.tasks_count > 0) project.tasks_count--
     }
 
-    return { projects, loading, error, setProjects, addProject, incrementTaskCount, decrementTaskCount }
+    function updateProject(id: number, patch: Partial<Project>) {
+        const index = projects.value.findIndex(p => p.id === id)
+        if (index !== -1) projects.value[index] = { ...projects.value[index], ...patch }
+    }
+
+    return { projects, loading, error, setProjects, addProject, updateProject, incrementTaskCount, decrementTaskCount }
 })

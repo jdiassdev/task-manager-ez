@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Http\Requests\StoreProjectRequest;
+use App\Http\Requests\UpdateProjectRequest;
 use App\Http\Resources\ProjectResource;
 use App\Models\Project;
 use Illuminate\Http\JsonResponse;
@@ -32,5 +33,16 @@ class ProjectController extends Controller
             'code'    => 201,
             'data'    => (new ProjectResource($project->loadCount('tasks')))->only(['id', 'name', 'description', 'status', 'tasks_count']),
         ], 201);
+    }
+
+    public function update(UpdateProjectRequest $request, Project $project): JsonResponse
+    {
+        $project->update($request->validated());
+
+        return response()->json([
+            'message' => 'Projeto atualizado com sucesso.',
+            'code'    => 200,
+            'data'    => (new ProjectResource($project->loadCount('tasks')))->only(['id', 'name', 'description', 'status', 'tasks_count']),
+        ]);
     }
 }

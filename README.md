@@ -119,6 +119,10 @@ php vendor/bin/pest
 
 **Optimistic updates em `updateTask`** — o status da tarefa é atualizado no store antes de a API responder, eliminando latência percebida. Se o pedido falhar, o estado anterior é restaurado e um toast de erro é exibido.
 
+**Arquivar projeto (fora do spec)** — o modelo já tinha `ProjectStatus` com os valores `active` e `archived`, os scopes `scopeActive`/`scopeArchived` no model, e o campo `status` exposto na API. Implementar o `PATCH /api/projects/{id}` era a conclusão natural de uma estrutura que já estava preparada para isso. Deixar a funcionalidade a meio seria mais estranho do que completá-la.
+
+**Filtro de projetos por estado (fora do spec)** — consequência direta da funcionalidade de arquivo. Assim que projetos podem ser arquivados, a lista precisa de uma forma de os separar visualmente; sem filtro, projetos arquivados misturam-se com os ativos e a lista torna-se confusa. Os tabs "Ativos / Arquivados / Todos" resolvem isso sem adicionar complexidade — é um `computed` sobre o array já existente no store, sem nenhum pedido extra à API.
+
 ---
 
 ## O que ficou por implementar

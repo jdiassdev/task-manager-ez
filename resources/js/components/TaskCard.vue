@@ -12,8 +12,8 @@
                 {{ task.title }}
             </p>
             <button
-                @click.stop="$emit('delete', task.id)"
-                class="shrink-0 mt-0.5 text-gray-300 hover:text-red-400 transition-colors"
+                @click.stop="showConfirm = true"
+                class="shrink-0 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded p-1 transition-colors"
                 title="Eliminar tarefa"
             >
                 <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -59,19 +59,36 @@
             </select>
         </div>
     </div>
+    <ConfirmModal
+        v-if="showConfirm"
+        title="Eliminar tarefa"
+        message="Esta ação é permanente e não pode ser revertida."
+        confirm-label="Eliminar"
+        :destructive="true"
+        @confirm="handleDelete"
+        @cancel="showConfirm = false"
+    />
 </template>
 
 <script setup lang="ts">
-import { computed } from 'vue'
+import { ref, computed } from 'vue'
 import type { Task } from '../types'
+import ConfirmModal from './ConfirmModal.vue'
 
 /** Cartão de tarefa com indicação visual de prioridade, atraso e controlo de status. */
 const props = defineProps<{ task: Task }>()
 
-defineEmits<{
+const emit = defineEmits<{
     delete: [id: number]
     'status-change': [id: number, status: Task['status']]
 }>()
+
+const showConfirm = ref(false)
+
+function handleDelete() {
+    showConfirm.value = false
+    emit('delete', props.task.id)
+}
 
 const isOverdue = computed(() => props.task.is_overdue)
 
