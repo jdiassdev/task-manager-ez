@@ -1,40 +1,60 @@
 # Task Manager
 
-Backend em Laravel 12 (API RESTful) + frontend em Vue 3 + Tailwind 4 (SPA).
+API RESTful em Laravel 12 com SPA Vue 3 + Tailwind 4 integrada via Vite.
 
 ---
 
 ## Estrutura
 
 ```
-task-manager-test/
-├── backend/    # API Laravel 12
-└── frontend/   # SPA Vue 3
+task-manager-test/      # raiz = projecto Laravel
+├── app/
+├── resources/
+│   ├── css/            # Tailwind 4
+│   └── js/             # SPA Vue 3
+├── routes/
+│   └── api.php
+└── ...
 ```
 
 ---
 
-## Backend
-
-### Requisitos
+## Requisitos
 
 - PHP >= 8.2
 - Composer
+- Node.js >= 18
 
-### Instalação
+---
+
+## Instalação
 
 ```bash
-cd backend
 cp .env.example .env
 composer install
 php artisan key:generate
 php artisan migrate --seed
+npm install
+```
+
+### Correr
+
+```bash
+# Terminal 1 — API Laravel
 php artisan serve
+
+# Terminal 2 — frontend (Vite)
+npm run dev
 ```
 
 API disponível em `http://localhost:8000`.
+Frontend disponível em `http://localhost:5173`.
 
 > SQLite por defeito. Para MySQL, editar `DB_CONNECTION` e as variáveis `DB_*` no `.env`.
+
+---
+
+## API
 
 ### Endpoints
 
@@ -47,7 +67,7 @@ API disponível em `http://localhost:8000`.
 | PATCH | `/api/tasks/{id}` | Atualizar status/prioridade |
 | DELETE | `/api/tasks/{id}` | Eliminar tarefa |
 
-#### Filtros em `GET /api/projects/{id}/tasks`
+### Filtros em `GET /api/projects/{id}/tasks`
 
 | Parâmetro | Exemplo | Descrição |
 |-----------|---------|-----------|
@@ -56,20 +76,22 @@ API disponível em `http://localhost:8000`.
 | `overdue` | `?overdue=true` | Apenas tarefas em atraso |
 | `due_date` | `?due_date=2026-06-10` | Filtra por data exacta |
 
-#### Formato de resposta
+### Formato de resposta
 
 ```json
 { "message": "...", "code": 200, "data": { ... } }
 ```
 
-Listas paginadas incluem também `meta` e `links` com o cursor de paginação.
+Listas paginadas incluem `meta` e `links` com cursor de paginação.
 
 Erros de validação devolvem `422` com campo `errors`:
 ```json
 { "message": "Dados inválidos.", "code": 422, "data": null, "errors": { "name": ["..."] } }
 ```
 
-### Testes
+---
+
+## Testes
 
 ```bash
 php vendor/bin/pest
@@ -77,31 +99,22 @@ php vendor/bin/pest
 
 ---
 
-## Frontend
-
-> A implementar.
-
----
-
 ## Decisões técnicas
 
-**SQLite por defeito** — elimina a necessidade de configurar servidor de BD para correr o projeto. Trocar para MySQL é apenas alterar o `.env`.
+**SQLite por defeito** — elimina a necessidade de configurar servidor de BD para correr o projeto.
 
-**Enums PHP nativos** — `ProjectStatus`, `TaskStatus` e `TaskPriority` são backed enums com cast directo no model. Valores inválidos são rejeitados antes de chegar à base de dados.
+**Enums PHP nativos** — `ProjectStatus`, `TaskStatus` e `TaskPriority` são backed enums com cast directo no model.
 
-**Envelope de resposta `{ message, code, data }`** — todas as respostas seguem o mesmo formato para garantir consistência no frontend: o cliente sabe sempre onde estão os dados, a mensagem e o código, independentemente do endpoint.
+**Envelope de resposta `{ message, code, data }`** — todas as respostas seguem o mesmo formato para garantir consistência no cliente.
 
-**`BaseResource` com `only()`** — todos os resources estendem uma `BaseResource` com método `only(['campo'])` que permite reutilizar o mesmo resource em contextos diferentes (lista vs detalhe) sem criar classes duplicadas.
+**`BaseResource` com `only()`** — reutiliza o mesmo resource em contextos diferentes (lista vs detalhe) sem classes duplicadas.
 
-**`FilterTaskRequest` em endpoint GET** — validar query parameters via Form Request, mesmo em endpoints de leitura, mantém a validação centralizada e o request reutilizável noutros contextos, em vez de espalhar regras pelo controller.
+**`FilterTaskRequest` em endpoint GET** — validação de query parameters via Form Request, centralizada e reutilizável.
 
-**Pest em vez de PHPUnit directo** — Pest é construído sobre PHPUnit (satisfaz o requisito), com sintaxe mais expressiva e legível. Os testes continuam a correr com o mesmo runner por baixo.
+**Pest em vez de PHPUnit directo** — construído sobre PHPUnit, com sintaxe mais expressiva.
 
 ---
 
 ## O que ficou por implementar
 
 > A preencher no final.
-
----
-
