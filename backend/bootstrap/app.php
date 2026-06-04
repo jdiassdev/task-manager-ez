@@ -11,12 +11,12 @@ return Application::configure(basePath: dirname(__DIR__))
         commands: __DIR__.'/../routes/console.php',
         health: '/up',
     )
-    ->withMiddleware(function (Middleware $middleware): void {
+    ->withMiddleware(function (Middleware $_middleware): void {
         //
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         $exceptions->render(function (\Illuminate\Validation\ValidationException $e, $request) {
-            if ($request->is('api/*')) {
+            if ($request->expectsJson()) {
                 return response()->json([
                     'message' => 'Dados inválidos.',
                     'code'    => 422,
@@ -26,13 +26,11 @@ return Application::configure(basePath: dirname(__DIR__))
             }
         });
 
-        $exceptions->render(function (\Illuminate\Database\Eloquent\ModelNotFoundException $e, $request) {
-            if ($request->is('api/*')) {
-                return response()->json([
-                    'message' => 'Recurso não encontrado.',
-                    'code'    => 404,
-                    'data'    => null,
-                ], 404);
-            }
+        $exceptions->render(function (\Symfony\Component\HttpKernel\Exception\NotFoundHttpException $_e) {
+            return response()->json([
+                'message' => 'Recurso não encontrado.',
+                'code'    => 404,
+                'data'    => null,
+            ], 404);
         });
     })->create();

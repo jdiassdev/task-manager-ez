@@ -15,6 +15,11 @@ class Task extends Model
 {
     use HasFactory, SoftDeletes;
 
+    protected $attributes = [
+        'status'   => 'todo',
+        'priority' => 'medium',
+    ];
+
     protected $fillable = [
         'project_id',
         'title',
