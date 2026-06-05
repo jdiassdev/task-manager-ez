@@ -90,7 +90,7 @@ Listas de tarefas incluem `meta` com `next_cursor` e `prev_cursor` para navegaç
 
 ```bash
 # Backend (PHPUnit)
-php vendor/bin/phpunit
+php artisan test
 
 # Frontend (Vitest)
 npm test
