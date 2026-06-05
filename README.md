@@ -130,4 +130,6 @@ Os testes de frontend cobrem `useTask` (carregamento, filtros, paginação com c
 
 **Índices compostos em `tasks`:** quatro índices criados com base nas queries reais do log: `(project_id, deleted_at)` como base de toda listagem, mais três variantes com `status`, `priority` e `due_date` para cobrir os filtros disponíveis. `project_id` vem primeiro em todos porque é a coluna de maior seletividade.
 
+**UI/UX intencional e enxuta:** o design foca no essencial para um MVP — sem animações desnecessárias, sem componentes complexos, sem bibliotecas de UI. Tailwind direto, componentes simples, fluxos diretos. A intenção é mostrar clareza de código e produto funcional.
+
 **Arquivar projeto e filtro de estado (fora do spec):** o modelo já tinha `ProjectStatus` com `active`/`archived` e os scopes; o endpoint era a peça que faltava. O filtro é a consequência direta: sem ele, arquivados se misturam com os ativos.
