@@ -17,6 +17,7 @@ class TaskController extends Controller
     public function index(FilterTaskRequest $request, Project $project): JsonResponse
     {
         $tasks = $project->tasks()
+            ->select(['id', 'project_id', 'title', 'description', 'status', 'priority', 'due_date', 'created_at', 'updated_at'])
             ->when($request->status, fn ($q) => $q->byStatus(TaskStatus::from($request->status)))
             ->when($request->priority, fn ($q) => $q->byPriority(TaskPriority::from($request->priority)))
             ->when($request->boolean('overdue'), fn ($q) => $q->overdue())
@@ -60,10 +61,6 @@ class TaskController extends Controller
     {
         $task->delete();
 
-        return response()->json([
-            'message' => 'Tarefa eliminada com sucesso.',
-            'code'    => 200,
-            'data'    => null,
-        ], 200);
+        return response()->json(null, 204);
     }
 }

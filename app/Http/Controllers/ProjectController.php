@@ -12,15 +12,15 @@ class ProjectController extends Controller
 {
     public function index(): JsonResponse
     {
-        $projects = Project::withCount('tasks')->cursorPaginate(15);
-        $paginated = ProjectResource::collection($projects)->response()->getData(true);
+        $projects = Project::query()->select(['id', 'name', 'description', 'status'])->withCount('tasks')->get();
+
+        $collection = ProjectResource::collection($projects);
+        $collection->collection->each(fn($r) => $r->only(['id', 'name', 'description', 'status', 'tasks_count']));
 
         return response()->json([
             'message' => 'Projetos listados com sucesso.',
             'code'    => 200,
-            'data'    => $paginated['data'],
-            'meta'    => $paginated['meta'] ?? null,
-            'links'   => $paginated['links'] ?? null,
+            'data'    => $collection,
         ], 200);
     }
 

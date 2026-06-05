@@ -24,6 +24,15 @@ class FilterTaskRequest extends FormRequest
         ];
     }
 
+    public function withValidator(\Illuminate\Validation\Validator $validator): void
+    {
+        $validator->after(function ($v) {
+            if ($this->boolean('overdue') && $this->input('status') === TaskStatus::Done->value) {
+                $v->errors()->add('overdue', 'Tarefas atrasadas não podem ter status concluído.');
+            }
+        });
+    }
+
     public function messages(): array
     {
         return [

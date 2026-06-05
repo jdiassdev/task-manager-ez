@@ -105,9 +105,18 @@ class TaskTest extends TestCase
     {
         $task = Task::factory()->create();
 
-        $this->deleteJson("/api/tasks/{$task->id}")->assertStatus(200);
+        $this->deleteJson("/api/tasks/{$task->id}")->assertStatus(204);
 
         $this->assertSoftDeleted('tasks', ['id' => $task->id]);
+    }
+
+    public function test_rejeita_filtro_overdue_com_status_done(): void
+    {
+        $project = Project::factory()->create();
+
+        $this->getJson("/api/projects/{$project->id}/tasks?overdue=1&status=done")
+            ->assertStatus(422)
+            ->assertJsonStructure(['errors' => ['overdue']]);
     }
 
     public function test_retorna_404_para_projeto_inexistente(): void
