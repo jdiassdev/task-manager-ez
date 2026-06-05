@@ -1,6 +1,6 @@
 <template>
     <div class="min-h-screen">
-        <header class="bg-white border-b border-gray-100 sticky top-0 z-40">
+        <header class="bg-white border-b border-gray-100 fixed top-0 left-0 right-0 z-40">
             <div class="max-w-6xl mx-auto px-4 sm:px-6 h-14 flex items-center gap-3">
                 <RouterLink to="/" class="flex items-center gap-2.5 hover:opacity-80 transition-opacity">
                     <div class="w-7 h-7 bg-primary rounded-sm flex items-center justify-center shrink-0">
@@ -19,14 +19,17 @@
             </div>
         </header>
 
-        <main>
+        <main class="pt-14">
             <slot />
         </main>
+
+        <BackToTop />
     </div>
 </template>
 
 <script setup lang="ts">
 import { RouterLink, useRoute } from 'vue-router'
+import BackToTop from './BackToTop.vue'
 
 defineProps<{ projectName?: string }>()
 

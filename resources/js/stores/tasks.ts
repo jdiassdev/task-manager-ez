@@ -6,18 +6,16 @@ export const useTaskStore = defineStore('tasks', () => {
     const tasks = ref<Task[]>([])
     const loading = ref(false)
     const error = ref<string | null>(null)
-    const nextCursor = ref<string | null>(null)
+    const currentPage = ref(1)
+    const lastPage = ref(1)
 
     function setTasks(data: Task[]) {
         tasks.value = data
     }
 
-    function appendTasks(data: Task[]) {
-        tasks.value.push(...data)
-    }
-
-    function setNextCursor(cursor: string | null) {
-        nextCursor.value = cursor
+    function setPage(current: number, last: number) {
+        currentPage.value = current
+        lastPage.value = last
     }
 
     function addTask(task: Task) {
@@ -35,5 +33,5 @@ export const useTaskStore = defineStore('tasks', () => {
         tasks.value = tasks.value.filter(t => t.id !== id)
     }
 
-    return { tasks, loading, error, nextCursor, setTasks, appendTasks, setNextCursor, addTask, updateTask, removeTask }
+    return { tasks, loading, error, currentPage, lastPage, setTasks, setPage, addTask, updateTask, removeTask }
 })

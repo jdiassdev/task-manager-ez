@@ -13,30 +13,31 @@ class DatabaseSeeder extends Seeder
 
     public function run(): void
     {
-        // 3 projetos activos com tarefas variadas
+        // Projecto principal com tarefas suficientes para testar paginação (> 20)
+        $main = Project::factory()->active()->create(['name' => 'Projecto Principal']);
+
+        Task::factory()->count(10)->create(['project_id' => $main->id]);
+        Task::factory()->overdue()->count(5)->create(['project_id' => $main->id]);
+        Task::factory()->done()->count(8)->create(['project_id' => $main->id]);
+        Task::factory()->highPriority()->count(5)->create(['project_id' => $main->id]);
+        Task::factory()->count(7)->create(['project_id' => $main->id, 'due_date' => null]);
+        // Total: 35 tarefas — garante 2 páginas com per_page=20
+
+        // Mais 3 projectos activos com volume normal
         Project::factory()
             ->active()
             ->count(3)
             ->create()
             ->each(function (Project $project) {
-                // tarefas normais com datas variadas
                 Task::factory()->count(5)->create(['project_id' => $project->id]);
-
-                // tarefas em atraso
                 Task::factory()->overdue()->count(2)->create(['project_id' => $project->id]);
-
-                // tarefas concluídas
                 Task::factory()->done()->count(2)->create(['project_id' => $project->id]);
-
-                // uma tarefa de alta prioridade sem data
-                Task::factory()->highPriority()->create([
-                    'project_id' => $project->id,
-                    'due_date'   => null,
-                ]);
+                Task::factory()->highPriority()->create(['project_id' => $project->id, 'due_date' => null]);
             });
 
-        // 1 projecto arquivado com poucas tarefas
-        $archived = Project::factory()->archived()->create();
-        Task::factory()->done()->count(3)->create(['project_id' => $archived->id]);
+        // 2 projectos arquivados
+        Project::factory()->archived()->count(2)->create()->each(function (Project $project) {
+            Task::factory()->done()->count(3)->create(['project_id' => $project->id]);
+        });
     }
 }

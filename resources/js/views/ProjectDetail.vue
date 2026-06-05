@@ -72,19 +72,22 @@
                 </button>
             </div>
 
-            <!-- Task list -->
-            <TransitionGroup
-                v-else
-                tag="div"
-                name="task"
-                class="flex flex-col gap-2 relative transition-opacity duration-150"
-                :class="{ 'opacity-40 pointer-events-none': loading && tasks.length > 0 }"
-            >
-                <TaskCard v-for="task in sortedTasks" :key="task.id" :task="task" @status-change="onStatusChange"
-                    @delete="deleteTask" />
-            </TransitionGroup>
-            <!-- Carregar mais -->
-            <LoadMoreButton :visible="!!nextCursor" :loading="loading" @load="loadMore" />
+            <!-- Task list + paginação -->
+            <template v-else>
+                <Pagination :current-page="currentPage" :last-page="lastPage" @change="load" />
+
+                <TransitionGroup
+                    tag="div"
+                    name="task"
+                    class="flex flex-col gap-2 relative transition-opacity duration-150 mt-3"
+                    :class="{ 'opacity-40 pointer-events-none': loading && tasks.length > 0 }"
+                >
+                    <TaskCard v-for="task in sortedTasks" :key="task.id" :task="task" @status-change="onStatusChange"
+                        @delete="deleteTask" />
+                </TransitionGroup>
+
+                <Pagination :current-page="currentPage" :last-page="lastPage" @change="load" />
+            </template>
         </template>
     </div>
 
@@ -98,7 +101,7 @@ import { useTask } from '../composables/useTask'
 import { useProjects } from '../composables/useProjects'
 import TaskCard from '../components/TaskCard.vue'
 import CreateTaskModal from '../components/CreateTaskModal.vue'
-import LoadMoreButton from '../components/LoadMoreButton.vue'
+import Pagination from '../components/Pagination.vue'
 import type { Task, TaskFilters } from '../types'
 
 const emit = defineEmits<{ 'project-name': [name: string] }>()
@@ -106,16 +109,16 @@ const emit = defineEmits<{ 'project-name': [name: string] }>()
 const route = useRoute()
 const projectId = computed(() => Number(route.params.id))
 
-const { tasks, loading, error, nextCursor, fetchTasks, loadMoreTasks, updateTask, deleteTask } = useTask()
+const { tasks, loading, error, currentPage, lastPage, fetchTasks, updateTask, deleteTask } = useTask()
 
 const sortedTasks = computed(() => [...tasks.value].sort((a, b) => {
     if (a.status === 'done' && b.status !== 'done') return 1
     if (a.status !== 'done' && b.status === 'done') return -1
     return 0
 }))
+
 const { projects, fetchProjects } = useProjects()
 const showModal = ref(false)
-
 const filters = reactive({ status: '', priority: '', overdue: false })
 
 function activeFilters(): TaskFilters {
@@ -126,12 +129,8 @@ function activeFilters(): TaskFilters {
     return params
 }
 
-async function load() {
-    await fetchTasks(projectId.value, activeFilters())
-}
-
-async function loadMore() {
-    await loadMoreTasks(projectId.value, activeFilters())
+async function load(page = 1) {
+    await fetchTasks(projectId.value, activeFilters(), page)
 }
 
 async function onStatusChange(id: number, status: Task['status']) {
@@ -150,7 +149,7 @@ async function resolveProjectName() {
 let debounceTimer: ReturnType<typeof setTimeout> | null = null
 watch(filters, () => {
     if (debounceTimer) clearTimeout(debounceTimer)
-    debounceTimer = setTimeout(load, 300)
+    debounceTimer = setTimeout(() => load(1), 300)
 })
 onUnmounted(() => { if (debounceTimer) clearTimeout(debounceTimer) })
 onMounted(() => { resolveProjectName(); load() })

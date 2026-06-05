@@ -9,6 +9,7 @@ export default defineConfig({
         laravel({
             input: ['resources/css/app.css', 'resources/js/app.ts'],
             refresh: true,
+            hotFile: 'public/hot',
         }),
         vue(),
         tailwindcss(),
@@ -17,6 +18,7 @@ export default defineConfig({
         environment: 'happy-dom',
     },
     server: {
+        host: '127.0.0.1',
         watch: {
             ignored: ['**/storage/framework/views/**'],
         },
