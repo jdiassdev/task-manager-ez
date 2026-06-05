@@ -74,7 +74,7 @@
 
             <!-- Task list + paginação -->
             <template v-else>
-                <Pagination :current-page="currentPage" :last-page="lastPage" @change="load" />
+                <Pagination :has-prev="!!prevCursor" :has-next="!!nextCursor" @prev="load(prevCursor!)" @next="load(nextCursor!)" />
 
                 <TransitionGroup
                     tag="div"
@@ -86,7 +86,7 @@
                         @delete="deleteTask" />
                 </TransitionGroup>
 
-                <Pagination :current-page="currentPage" :last-page="lastPage" @change="load" />
+                <Pagination :has-prev="!!prevCursor" :has-next="!!nextCursor" @prev="load(prevCursor!)" @next="load(nextCursor!)" />
             </template>
         </template>
     </div>
@@ -109,7 +109,7 @@ const emit = defineEmits<{ 'project-name': [name: string] }>()
 const route = useRoute()
 const projectId = computed(() => Number(route.params.id))
 
-const { tasks, loading, error, currentPage, lastPage, fetchTasks, updateTask, deleteTask } = useTask()
+const { tasks, loading, error, nextCursor, prevCursor, fetchTasks, updateTask, deleteTask } = useTask()
 
 const sortedTasks = computed(() => [...tasks.value].sort((a, b) => {
     if (a.status === 'done' && b.status !== 'done') return 1
@@ -129,8 +129,8 @@ function activeFilters(): TaskFilters {
     return params
 }
 
-async function load(page = 1) {
-    await fetchTasks(projectId.value, activeFilters(), page)
+async function load(cursor?: string) {
+    await fetchTasks(projectId.value, activeFilters(), cursor)
 }
 
 async function onStatusChange(id: number, status: Task['status']) {
@@ -149,7 +149,7 @@ async function resolveProjectName() {
 let debounceTimer: ReturnType<typeof setTimeout> | null = null
 watch(filters, () => {
     if (debounceTimer) clearTimeout(debounceTimer)
-    debounceTimer = setTimeout(() => load(1), 300)
+    debounceTimer = setTimeout(() => load(), 300)
 })
 onUnmounted(() => { if (debounceTimer) clearTimeout(debounceTimer) })
 onMounted(() => { resolveProjectName(); load() })

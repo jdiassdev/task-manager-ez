@@ -30,18 +30,15 @@ const mockTask: Task = {
     updated_at: '2026-01-01T00:00:00Z',
 }
 
-const pageMeta = (currentPage = 1, lastPage = 1) => ({
-    current_page: currentPage,
-    last_page: lastPage,
-    per_page: 20,
-    total: lastPage * 20,
-    from: 1,
-    to: 20,
+const cursorMeta = (nextCursor: string | null = null, prevCursor: string | null = null) => ({
     path: '/api/projects/1/tasks',
+    per_page: 20,
+    next_cursor: nextCursor,
+    prev_cursor: prevCursor,
 })
 
-const pagedResponse = (items: Task[], currentPage = 1, lastPage = 1) => ({
-    data: { data: items, meta: pageMeta(currentPage, lastPage), links: null, message: 'OK', code: 200 },
+const pagedResponse = (items: Task[], nextCursor: string | null = null, prevCursor: string | null = null) => ({
+    data: { data: items, meta: cursorMeta(nextCursor, prevCursor), links: null, message: 'OK', code: 200 },
 })
 
 const singleResponse = (item: Task) => ({
@@ -72,7 +69,7 @@ describe('useTask', () => {
 
             expect(axios.get).toHaveBeenCalledWith(
                 '/api/projects/1/tasks',
-                { params: { status: 'todo', priority: 'high', page: 1 } },
+                { params: { status: 'todo', priority: 'high' } },
             )
         })
 
@@ -84,7 +81,7 @@ describe('useTask', () => {
 
             expect(axios.get).toHaveBeenCalledWith(
                 '/api/projects/1/tasks',
-                { params: { overdue: 1, page: 1 } },
+                { params: { overdue: 1 } },
             )
         })
 
@@ -100,64 +97,68 @@ describe('useTask', () => {
         })
     })
 
-    describe('fetchTasks — paginação', () => {
-        it('guarda currentPage e lastPage devolvidos pela API', async () => {
-            vi.mocked(axios.get).mockResolvedValue(pagedResponse([mockTask], 2, 5))
+    describe('fetchTasks — paginação com cursor', () => {
+        it('guarda nextCursor e prevCursor devolvidos pela API', async () => {
+            vi.mocked(axios.get).mockResolvedValue(pagedResponse([mockTask], 'cursor-abc', null))
 
-            const { currentPage, lastPage, fetchTasks } = useTask()
+            const { nextCursor, prevCursor, fetchTasks } = useTask()
             await fetchTasks(1)
 
-            expect(currentPage.value).toBe(2)
-            expect(lastPage.value).toBe(5)
+            expect(nextCursor.value).toBe('cursor-abc')
+            expect(prevCursor.value).toBeNull()
         })
 
-        it('envia o número de página como parâmetro de query', async () => {
+        it('envia o cursor como parâmetro de query', async () => {
             vi.mocked(axios.get).mockResolvedValue(pagedResponse([]))
 
             const { fetchTasks } = useTask()
-            await fetchTasks(1, {}, 3)
+            await fetchTasks(1, {}, 'cursor-xyz')
 
             expect(axios.get).toHaveBeenCalledWith(
                 '/api/projects/1/tasks',
-                { params: { page: 3 } },
+                { params: { cursor: 'cursor-xyz' } },
             )
         })
 
-        it('substitui a lista ao navegar para outra página', async () => {
+        it('substitui a lista ao navegar com cursor', async () => {
             const task2: Task = { ...mockTask, id: 2 }
 
             vi.mocked(axios.get)
-                .mockResolvedValueOnce(pagedResponse([mockTask], 1, 2))
-                .mockResolvedValueOnce(pagedResponse([task2], 2, 2))
+                .mockResolvedValueOnce(pagedResponse([mockTask], 'cursor-next', null))
+                .mockResolvedValueOnce(pagedResponse([task2], null, 'cursor-prev'))
 
             const { tasks, fetchTasks } = useTask()
-            await fetchTasks(1, {}, 1)
+            await fetchTasks(1)
             expect(tasks.value[0].id).toBe(1)
 
-            await fetchTasks(1, {}, 2)
+            await fetchTasks(1, {}, 'cursor-next')
             expect(tasks.value).toHaveLength(1)
             expect(tasks.value[0].id).toBe(2)
         })
 
-        it('inclui os filtros ativos ao mudar de página', async () => {
+        it('inclui os filtros ativos ao usar cursor', async () => {
             vi.mocked(axios.get).mockResolvedValue(pagedResponse([]))
 
             const { fetchTasks } = useTask()
-            await fetchTasks(1, { status: 'todo' }, 2)
+            await fetchTasks(1, { status: 'todo' }, 'cursor-xyz')
 
             expect(axios.get).toHaveBeenCalledWith(
                 '/api/projects/1/tasks',
-                { params: { status: 'todo', page: 2 } },
+                { params: { status: 'todo', cursor: 'cursor-xyz' } },
             )
         })
 
-        it('repõe para página 1 em novo fetch sem página explícita', async () => {
-            vi.mocked(axios.get).mockResolvedValue(pagedResponse([], 1, 1))
+        it('não envia cursor em fetch sem argumento (primeira página)', async () => {
+            vi.mocked(axios.get).mockResolvedValue(pagedResponse([], 'cursor-next', null))
 
-            const { currentPage, fetchTasks } = useTask()
+            const { nextCursor, fetchTasks } = useTask()
             await fetchTasks(1)
 
-            expect(currentPage.value).toBe(1)
+            expect(axios.get).toHaveBeenCalledWith(
+                '/api/projects/1/tasks',
+                { params: {} },
+            )
+            expect(nextCursor.value).toBe('cursor-next')
         })
     })
 

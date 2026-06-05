@@ -21,7 +21,7 @@ class TaskController extends Controller
             ->when($request->priority, fn ($q) => $q->byPriority(TaskPriority::from($request->priority)))
             ->when($request->boolean('overdue'), fn ($q) => $q->overdue())
             ->when($request->due_date, fn ($q) => $q->whereDate('due_date', $request->due_date))
-            ->paginate(20);
+            ->cursorPaginate(20);
 
         $paginated = TaskResource::collection($tasks)->response()->getData(true);
 

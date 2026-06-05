@@ -2,7 +2,7 @@
 
 Aplicação full-stack de gestão de tarefas construída como teste técnico.
 
-**Backend** — Laravel 12 · PHP 8.3 · SQLite · Pest  
+**Backend** — Laravel 12 · PHP 8.3 · SQLite · PHPUnit  
 **Frontend** — Vue 3 · TypeScript · Pinia · Vue Router · Tailwind CSS 4 · Vitest
 
 ---
@@ -85,6 +85,7 @@ Aceder em `http://localhost:8000`.
 | `priority` | `?priority=high` | `low` · `medium` · `high` |
 | `overdue` | `?overdue=1` | `1` ou `0` |
 | `due_date` | `?due_date=2026-06-10` | Formato `Y-m-d` |
+| `cursor` | `?cursor=xxx` | Cursor opaco devolvido pela API |
 
 ### Formato de resposta
 
@@ -96,7 +97,7 @@ Aceder em `http://localhost:8000`.
 }
 ```
 
-Listas incluem `meta` e `links` com cursor de paginação. Erros de validação devolvem `422` com campo `errors`.
+Listas incluem `meta` com `next_cursor` e `prev_cursor` para navegação. Erros de validação devolvem `422` com campo `errors`.
 
 ---
 
@@ -132,6 +133,8 @@ Os testes de frontend cobrem `useTask` (carregamento, filtros, paginação com c
 
 **PHPUnit** — testes de feature com `RefreshDatabase` e SQLite em memória (`:memory:`); cada teste corre isolado sem persistência entre casos.
 
+**Cursor pagination** — `cursorPaginate(20)` em vez de offset; evita `COUNT(*)` e mantém resultados estáveis mesmo que tarefas sejam criadas ou eliminadas durante a navegação. Num task manager raramente se ultrapassa 2 páginas, o que torna o cursor ideal — sem necessidade de saber o total de páginas.
+
 **Pinia com stores singleton** — as stores são instâncias únicas partilhadas por toda a app; componentes não relacionados leem e escrevem no mesmo estado sem passar props.
 
 **Composables como camada de serviço** — `useTask` e `useProjects` encapsulam pedidos HTTP, estado e toasts; os componentes chamam funções com nomes de negócio sem conhecer detalhes de implementação.
@@ -147,17 +150,3 @@ Os testes de frontend cobrem `useTask` (carregamento, filtros, paginação com c
 **Filtragem de projetos no frontend** — `GET /api/projects` já devolve todos os projetos; filtrar no backend exigiria um pedido por tab para dados já em memória. Aceitável para o volume esperado; a escala justificaria mover o filtro para a API.
 
 **Arquivar projeto e filtro de estado (fora do spec)** — o modelo já tinha `ProjectStatus` com `active`/`archived` e os scopes; o endpoint era a peça que faltava. O filtro é a consequência direta: sem ele, arquivados misturam-se com os ativos.
-
----
-
-## O que ficou por implementar
-
-**Autenticação** — a API não tem autenticação; todos os dados são globais. Num produto real cada utilizador teria os seus próprios recursos. Ficou de fora por não ser pedido no enunciado e para não aumentar a complexidade do setup.
-
-**"Carregar mais" na lista de tarefas** — o backend usa cursor pagination e devolve as primeiras 20 tarefas. O frontend não implementa paginação incremental; apenas a primeira página é apresentada.
-
-**Edição de tarefa** — após criação, só é possível alterar status e prioridade. Título, descrição e data limite não são editáveis. A API suporta `PATCH /api/tasks/{id}` mas o frontend não tem UI para estes campos.
-
-**Edição de projeto** — nome e descrição não são editáveis após criação, pelo mesmo motivo.
-
-**Vista Kanban** — seria a adição de maior valor para um task manager (colunas por status: A fazer · Em progresso · Concluído), mas ficou fora do scope do teste.

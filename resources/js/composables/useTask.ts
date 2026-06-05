@@ -8,17 +8,23 @@ import type { Task, TaskFilters, ApiResponse, PaginatedResponse } from '../types
 export function useTask() {
     const store = useTaskStore()
     const projectStore = useProjectStore()
-    const { tasks, loading, error, currentPage, lastPage } = storeToRefs(store)
+    const { tasks, loading, error, nextCursor, prevCursor } = storeToRefs(store)
     const toast = useToast()
 
-    async function fetchTasks(projectId: number, filters: TaskFilters = {}, page = 1): Promise<void> {
+    async function fetchTasks(projectId: number, filters: TaskFilters = {}, cursor?: string): Promise<void> {
         store.loading = true
         store.error = null
         try {
-            const params = { ...filters, ...(filters.overdue ? { overdue: 1 } : {}), page }
+            const params: Record<string, unknown> = {}
+            if (filters.status)   params.status = filters.status
+            if (filters.priority) params.priority = filters.priority
+            if (filters.overdue)  params.overdue = 1
+            if (filters.due_date) params.due_date = filters.due_date
+            if (cursor)           params.cursor = cursor
+
             const { data } = await axios.get<PaginatedResponse<Task>>(`/api/projects/${projectId}/tasks`, { params })
             store.setTasks(data.data)
-            store.setPage(data.meta?.current_page ?? 1, data.meta?.last_page ?? 1)
+            store.setCursors(data.meta?.next_cursor ?? null, data.meta?.prev_cursor ?? null)
         } catch (e: any) {
             store.error = e.response?.data?.message ?? 'Erro ao carregar tarefas.'
         } finally {
@@ -71,5 +77,5 @@ export function useTask() {
         }
     }
 
-    return { tasks, loading, error, currentPage, lastPage, fetchTasks, createTask, updateTask, deleteTask }
+    return { tasks, loading, error, nextCursor, prevCursor, fetchTasks, createTask, updateTask, deleteTask }
 }
