@@ -1,6 +1,6 @@
 # Task Manager
 
-Aplicação full-stack de gerenciamento de tarefas feita como teste técnico.
+Aplicação full-stack de gerenciamento de tarefas simplificada.
 
 **Backend:** Laravel 12, PHP 8.3, SQLite, PHPUnit  
 **Frontend:** Vue 3, TypeScript, Pinia, Vue Router, Tailwind CSS 4, Vitest
