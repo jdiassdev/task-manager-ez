@@ -1,52 +1,65 @@
 <?php
 
+namespace Tests\Feature;
+
 use App\Models\Project;
 use App\Models\Task;
+use Illuminate\Foundation\Testing\RefreshDatabase;
+use Tests\TestCase;
 
-it('lista projetos com tasks_count', function () {
-    Project::factory()->active()->has(Task::factory()->count(3))->create();
-    Project::factory()->archived()->has(Task::factory()->count(1))->create();
+class ProjectTest extends TestCase
+{
+    use RefreshDatabase;
 
-    $response = $this->getJson('/api/projects');
+    public function test_lista_projetos_com_tasks_count(): void
+    {
+        Project::factory()->active()->has(Task::factory()->count(3))->create();
+        Project::factory()->archived()->has(Task::factory()->count(1))->create();
 
-    $response->assertStatus(200)
-        ->assertJsonPath('code', 200)
-        ->assertJsonStructure([
-            'data' => ['*' => ['id', 'name', 'status', 'tasks_count']],
+        $response = $this->getJson('/api/projects');
+
+        $response->assertStatus(200)
+            ->assertJsonPath('code', 200)
+            ->assertJsonStructure([
+                'data' => ['*' => ['id', 'name', 'status', 'tasks_count']],
+            ]);
+
+        $this->assertCount(2, $response->json('data'));
+    }
+
+    public function test_cria_projeto_com_dados_validos(): void
+    {
+        $response = $this->postJson('/api/projects', [
+            'name'        => 'Novo Projeto',
+            'description' => 'Descrição do projeto.',
+            'status'      => 'active',
         ]);
 
-    expect($response->json('data'))->toHaveCount(2);
-});
+        $response->assertStatus(201)
+            ->assertJsonPath('code', 201)
+            ->assertJsonPath('data.name', 'Novo Projeto')
+            ->assertJsonPath('data.status', 'active');
 
-it('cria projeto com dados válidos', function () {
-    $response = $this->postJson('/api/projects', [
-        'name'        => 'Novo Projeto',
-        'description' => 'Descrição do projeto.',
-        'status'      => 'active',
-    ]);
+        $this->assertDatabaseHas('projects', ['name' => 'Novo Projeto']);
+    }
 
-    $response->assertStatus(201)
-        ->assertJsonPath('code', 201)
-        ->assertJsonPath('data.name', 'Novo Projeto')
-        ->assertJsonPath('data.status', 'active');
+    public function test_falha_ao_criar_projeto_sem_nome(): void
+    {
+        $response = $this->postJson('/api/projects', ['description' => 'Sem nome']);
 
-    $this->assertDatabaseHas('projects', ['name' => 'Novo Projeto']);
-});
+        $response->assertStatus(422)
+            ->assertJsonPath('code', 422)
+            ->assertJsonStructure(['errors' => ['name']]);
+    }
 
-it('falha ao criar projeto sem nome', function () {
-    $response = $this->postJson('/api/projects', ['description' => 'Sem nome']);
+    public function test_falha_ao_criar_projeto_com_status_invalido(): void
+    {
+        $response = $this->postJson('/api/projects', [
+            'name'   => 'Projeto',
+            'status' => 'invalid',
+        ]);
 
-    $response->assertStatus(422)
-        ->assertJsonPath('code', 422)
-        ->assertJsonStructure(['errors' => ['name']]);
-});
-
-it('falha ao criar projeto com status inválido', function () {
-    $response = $this->postJson('/api/projects', [
-        'name'   => 'Projeto',
-        'status' => 'invalid',
-    ]);
-
-    $response->assertStatus(422)
-        ->assertJsonStructure(['errors' => ['status']]);
-});
+        $response->assertStatus(422)
+            ->assertJsonStructure(['errors' => ['status']]);
+    }
+}

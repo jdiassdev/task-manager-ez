@@ -103,14 +103,16 @@ Listas incluem `meta` e `links` com cursor de paginação. Erros de validação 
 ## Testes
 
 ```bash
-# Backend
-php vendor/bin/pest
+# Backend (PHPUnit)
+php vendor/bin/phpunit
 
-# Frontend
+# Frontend (Vitest)
 npm test
 ```
 
-Os testes de frontend cobrem `useTask` (carregamento, filtros, optimistic update com reversão automática, eliminação) e `useToast` (criação, tipos, dismiss manual e auto-dismiss por timeout).
+Os testes de backend cobrem os endpoints de projetos e tarefas: listagem, criação, validação, filtros, atualização de status e soft delete.
+
+Os testes de frontend cobrem `useTask` (carregamento, filtros, paginação com cursor, optimistic update com reversão automática, eliminação) e `useToast` (criação, tipos, dismiss manual e auto-dismiss por timeout).
 
 ---
 
@@ -128,7 +130,7 @@ Os testes de frontend cobrem `useTask` (carregamento, filtros, optimistic update
 
 **`Route::fallback` para SPA** — só ativa quando nenhuma outra rota Laravel corresponde, sem depender da ordem de declaração.
 
-**Pest em vez de PHPUnit direto** — construído sobre PHPUnit (satisfaz o requisito), com sintaxe mais legível.
+**PHPUnit** — testes de feature com `RefreshDatabase` e SQLite em memória (`:memory:`); cada teste corre isolado sem persistência entre casos.
 
 **Pinia com stores singleton** — as stores são instâncias únicas partilhadas por toda a app; componentes não relacionados leem e escrevem no mesmo estado sem passar props.
 
