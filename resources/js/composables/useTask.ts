@@ -8,18 +8,47 @@ import type { Task, TaskFilters, ApiResponse, PaginatedResponse } from '../types
 export function useTask() {
     const store = useTaskStore()
     const projectStore = useProjectStore()
-    const { tasks, loading, error } = storeToRefs(store)
+    const { tasks, loading, error, nextCursor } = storeToRefs(store)
     const toast = useToast()
+
+    function buildParams(filters: TaskFilters, cursor?: string) {
+        return {
+            ...filters,
+            ...(filters.overdue ? { overdue: 1 } : {}),
+            ...(cursor ? { cursor } : {}),
+        }
+    }
 
     async function fetchTasks(projectId: number, filters: TaskFilters = {}): Promise<void> {
         store.loading = true
         store.error = null
         try {
-            const params = { ...filters, ...(filters.overdue ? { overdue: 1 } : {}) }
-            const { data } = await axios.get<PaginatedResponse<Task>>(`/api/projects/${projectId}/tasks`, { params })
+            const { data } = await axios.get<PaginatedResponse<Task>>(
+                `/api/projects/${projectId}/tasks`,
+                { params: buildParams(filters) },
+            )
             store.setTasks(data.data)
+            store.setNextCursor(data.meta?.next_cursor ?? null)
         } catch (e: any) {
             store.error = e.response?.data?.message ?? 'Erro ao carregar tarefas.'
+        } finally {
+            store.loading = false
+        }
+    }
+
+    async function loadMoreTasks(projectId: number, filters: TaskFilters = {}): Promise<void> {
+        if (!store.nextCursor) return
+        store.loading = true
+        store.error = null
+        try {
+            const { data } = await axios.get<PaginatedResponse<Task>>(
+                `/api/projects/${projectId}/tasks`,
+                { params: buildParams(filters, store.nextCursor) },
+            )
+            store.appendTasks(data.data)
+            store.setNextCursor(data.meta?.next_cursor ?? null)
+        } catch (e: any) {
+            store.error = e.response?.data?.message ?? 'Erro ao carregar mais tarefas.'
         } finally {
             store.loading = false
         }
@@ -70,5 +99,5 @@ export function useTask() {
         }
     }
 
-    return { tasks, loading, error, fetchTasks, createTask, updateTask, deleteTask }
+    return { tasks, loading, error, nextCursor, fetchTasks, loadMoreTasks, createTask, updateTask, deleteTask }
 }

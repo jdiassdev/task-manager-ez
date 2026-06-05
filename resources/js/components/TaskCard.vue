@@ -1,6 +1,6 @@
 <template>
     <div
-        class="bg-white rounded-md border border-gray-100 border-l-4 pl-4 pr-4 py-4 flex flex-col gap-2.5 hover:shadow-sm transition-shadow duration-150"
+        class="group bg-white rounded-md border border-gray-100 border-l-4 pl-4 pr-4 py-4 flex flex-col gap-2.5 hover:shadow-sm transition-shadow duration-150"
         :class="[isOverdue ? 'border-l-red-400' : priorityBorder, { 'opacity-55': task.status === 'done' }]"
     >
         <!-- Título + delete -->
@@ -13,7 +13,7 @@
             </p>
             <button
                 @click.stop="showConfirm = true"
-                class="shrink-0 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded p-1 transition-colors"
+                class="shrink-0 opacity-0 group-hover:opacity-100 focus:opacity-100 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded p-1 transition-all"
                 title="Eliminar tarefa"
             >
                 <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -31,34 +31,52 @@
         <!-- Footer -->
         <div class="flex items-center justify-between gap-2 flex-wrap pt-1">
             <div class="flex items-center gap-2">
-                <!-- Em atraso -->
                 <span v-if="isOverdue" class="inline-flex items-center gap-1 text-xs font-medium text-red-500 bg-red-50 px-2 py-0.5 rounded-full">
                     <span class="w-1.5 h-1.5 rounded-full bg-red-400 inline-block" />
                     Em atraso
                 </span>
-                <!-- Data -->
                 <span v-if="task.due_date" class="text-xs text-gray-400">
                     {{ formatDate(task.due_date) }}
                 </span>
-                <!-- Prioridade -->
                 <span class="text-xs font-medium px-1.5 py-0.5 rounded-full" :class="priorityBadge">
                     {{ priorityLabel }}
                 </span>
             </div>
 
-            <!-- Status -->
-            <select
-                :value="task.status"
-                @change="$emit('status-change', task.id, ($event.target as HTMLSelectElement).value as Task['status'])"
-                class="text-xs font-medium px-2.5 py-1 rounded-full border-0 outline-none cursor-pointer appearance-none"
-                :class="statusBadge"
-            >
-                <option value="todo">A fazer</option>
-                <option value="in_progress">Em progresso</option>
-                <option value="done">Concluído</option>
-            </select>
+            <!-- Status dropdown -->
+            <div class="relative">
+                <div v-if="statusOpen" class="fixed inset-0 z-10" @click.stop="statusOpen = false" />
+                <button
+                    @click.stop="statusOpen = !statusOpen"
+                    class="relative z-20 flex items-center gap-1 text-xs font-medium px-2.5 py-1 rounded-full transition-colors"
+                    :class="statusBadge"
+                >
+                    {{ statusLabel }}
+                    <svg class="w-3 h-3 opacity-50" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M19 9l-7 7-7-7" />
+                    </svg>
+                </button>
+                <div
+                    v-if="statusOpen"
+                    class="absolute right-0 bottom-full mb-1.5 bg-white border border-gray-100 rounded-md shadow-lg z-20 py-1 min-w-[150px]"
+                >
+                    <button
+                        v-for="opt in statusOptions"
+                        :key="opt.value"
+                        @click.stop="selectStatus(opt.value)"
+                        class="w-full flex items-center gap-2.5 px-3 py-2 text-xs font-medium text-left transition-colors"
+                        :class="task.status === opt.value
+                            ? 'opacity-40 cursor-default'
+                            : optionHoverClass(opt.value)"
+                    >
+                        <span class="w-1.5 h-1.5 rounded-full shrink-0" :class="statusDotClass(opt.value)" />
+                        {{ opt.label }}
+                    </button>
+                </div>
+            </div>
         </div>
     </div>
+
     <ConfirmModal
         v-if="showConfirm"
         title="Eliminar tarefa"
@@ -75,7 +93,6 @@ import { ref, computed } from 'vue'
 import type { Task } from '../types'
 import ConfirmModal from './ConfirmModal.vue'
 
-/** Cartão de tarefa com indicação visual de prioridade, atraso e controlo de status. */
 const props = defineProps<{ task: Task }>()
 
 const emit = defineEmits<{
@@ -84,13 +101,29 @@ const emit = defineEmits<{
 }>()
 
 const showConfirm = ref(false)
+const statusOpen = ref(false)
+
+const statusOptions: { value: Task['status']; label: string }[] = [
+    { value: 'todo',        label: 'A fazer' },
+    { value: 'in_progress', label: 'Em progresso' },
+    { value: 'done',        label: 'Concluído' },
+]
 
 function handleDelete() {
     showConfirm.value = false
     emit('delete', props.task.id)
 }
 
+function selectStatus(status: Task['status']) {
+    statusOpen.value = false
+    if (status !== props.task.status) emit('status-change', props.task.id, status)
+}
+
 const isOverdue = computed(() => props.task.is_overdue)
+
+const statusLabel = computed(() => ({
+    todo: 'A fazer', in_progress: 'Em progresso', done: 'Concluído',
+}[props.task.status]))
 
 const priorityBorder = computed(() => ({
     'border-l-red-400':    props.task.priority === 'high',
@@ -109,10 +142,26 @@ const priorityLabel = computed(() => ({
 }[props.task.priority]))
 
 const statusBadge = computed(() => ({
-    'bg-gray-100 text-gray-500':       props.task.status === 'todo',
-    'bg-violet-50 text-primary':       props.task.status === 'in_progress',
-    'bg-green-50 text-green-600':      props.task.status === 'done',
+    'bg-gray-100 text-gray-500':  props.task.status === 'todo',
+    'bg-violet-50 text-primary':  props.task.status === 'in_progress',
+    'bg-green-50 text-green-600': props.task.status === 'done',
 }))
+
+function optionHoverClass(status: Task['status']) {
+    return {
+        'hover:bg-gray-50 text-gray-600':    status === 'todo',
+        'hover:bg-violet-50 text-primary':   status === 'in_progress',
+        'hover:bg-green-50 text-green-600':  status === 'done',
+    }
+}
+
+function statusDotClass(status: Task['status']) {
+    return {
+        'bg-gray-400':   status === 'todo',
+        'bg-primary':    status === 'in_progress',
+        'bg-green-500':  status === 'done',
+    }
+}
 
 function formatDate(date: string): string {
     return new Date(date).toLocaleDateString('pt-PT', { day: '2-digit', month: '2-digit', year: '2-digit' })

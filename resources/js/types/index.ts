@@ -39,6 +39,6 @@ export interface ApiResponse<T> {
 }
 
 export interface PaginatedResponse<T> extends ApiResponse<T[]> {
-    meta: Record<string, unknown> | null
-    links: Record<string, unknown> | null
+    meta: { next_cursor: string | null; prev_cursor: string | null; per_page: number; path: string } | null
+    links: { first: string | null; last: string | null; prev: string | null; next: string | null } | null
 }

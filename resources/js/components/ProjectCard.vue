@@ -1,6 +1,7 @@
 <template>
     <div
-        class="bg-white rounded-md border border-gray-100 p-5 flex flex-col gap-4 hover:shadow-md transition-shadow duration-200 cursor-pointer"
+        class="bg-white rounded-md border border-gray-100 border-l-4 p-5 flex flex-col gap-4 hover:shadow-md transition-all duration-200 cursor-pointer"
+        :class="project.status === 'active' ? 'border-l-primary' : 'border-l-gray-200 opacity-60 hover:opacity-80'"
         @click="$emit('click')"
     >
         <div class="flex items-start justify-between gap-3">
@@ -10,10 +11,10 @@
             </span>
         </div>
 
-        <p v-if="project.description" class="text-sm text-gray-500 line-clamp-2">
+        <p v-if="project.description" class="text-sm text-gray-500 line-clamp-2 leading-relaxed">
             {{ project.description }}
         </p>
-        <p v-else class="text-sm text-gray-300 italic">Sem descrição</p>
+        <p v-else class="text-sm text-gray-300">—</p>
 
         <div class="mt-auto pt-3 border-t border-gray-50 flex items-center justify-between">
             <div class="flex items-center gap-1.5 text-xs text-gray-400">
@@ -40,6 +41,7 @@
             </button>
         </div>
     </div>
+
     <ConfirmModal
         v-if="showConfirm"
         :title="project.status === 'active' ? 'Arquivar projeto' : 'Restaurar projeto'"

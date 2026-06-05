@@ -25,12 +25,18 @@
                     v-for="tab in tabs"
                     :key="tab.value"
                     @click="activeTab = tab.value"
-                    class="px-4 py-1.5 text-sm font-medium rounded transition-all"
+                    class="flex items-center gap-2 px-4 py-1.5 text-sm font-medium rounded transition-all"
                     :class="activeTab === tab.value
                         ? 'bg-white shadow-sm text-gray-900'
                         : 'text-gray-500 hover:text-gray-700'"
                 >
                     {{ tab.label }}
+                    <span
+                        class="text-xs px-1.5 py-0.5 rounded-full font-medium"
+                        :class="activeTab === tab.value ? 'bg-gray-100 text-gray-600' : 'bg-gray-200 text-gray-500'"
+                    >
+                        {{ counts[tab.value] }}
+                    </span>
                 </button>
             </div>
 
@@ -46,15 +52,31 @@
 
             <!-- Empty — sem projetos de todo -->
             <div v-else-if="projects.length === 0" class="text-center py-24">
-                <p class="text-gray-400 text-sm">Nenhum projeto criado ainda.</p>
-                <button @click="showModal = true" class="mt-3 text-sm text-primary hover:underline">
-                    Criar o primeiro projeto
+                <div class="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <svg class="w-7 h-7 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
+                            d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z" />
+                    </svg>
+                </div>
+                <p class="text-gray-700 font-medium">Nenhum projeto ainda</p>
+                <p class="text-gray-400 text-sm mt-1">Cria o teu primeiro projeto para começar.</p>
+                <button
+                    @click="showModal = true"
+                    class="mt-4 px-4 py-2 text-sm font-medium text-white bg-primary rounded-sm hover:bg-primary-hover transition-colors"
+                >
+                    Criar projeto
                 </button>
             </div>
 
             <!-- Empty — filtro sem resultados -->
             <div v-else-if="visibleProjects.length === 0" class="text-center py-24">
-                <p class="text-gray-400 text-sm">Nenhum projeto {{ activeTab === 'archived' ? 'arquivado' : 'ativo' }}.</p>
+                <div class="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <svg class="w-7 h-7 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
+                            d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8l1 12a2 2 0 002 2h8a2 2 0 002-2L19 8" />
+                    </svg>
+                </div>
+                <p class="text-gray-500 text-sm">Nenhum projeto {{ activeTab === 'archived' ? 'arquivado' : 'ativo' }}.</p>
             </div>
 
             <!-- Grid -->
@@ -93,6 +115,12 @@ const tabs: { label: string; value: Tab }[] = [
     { label: 'Ativos', value: 'active' },
     { label: 'Arquivados', value: 'archived' },
 ]
+
+const counts = computed(() => ({
+    all:      projects.value.length,
+    active:   projects.value.filter(p => p.status === 'active').length,
+    archived: projects.value.filter(p => p.status === 'archived').length,
+}))
 
 const visibleProjects = computed(() => {
     if (activeTab.value === 'active')   return projects.value.filter(p => p.status === 'active')

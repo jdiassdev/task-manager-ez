@@ -56,17 +56,35 @@
 
             <!-- Empty -->
             <div v-if="tasks.length === 0 && !loading" class="text-center py-20">
-                <p class="text-gray-400 text-sm">Nenhuma tarefa encontrada.</p>
-                <button @click="showModal = true" class="mt-3 text-sm text-primary hover:underline">
-                    Criar a primeira tarefa
+                <div class="w-14 h-14 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <svg class="w-6 h-6 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
+                            d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2M9 12l2 2 4-4" />
+                    </svg>
+                </div>
+                <p class="text-gray-700 font-medium">Nenhuma tarefa encontrada</p>
+                <p class="text-gray-400 text-sm mt-1">Adiciona a primeira tarefa a este projeto.</p>
+                <button
+                    @click="showModal = true"
+                    class="mt-4 px-4 py-2 text-sm font-medium text-white bg-primary rounded-sm hover:bg-primary-hover transition-colors"
+                >
+                    Nova tarefa
                 </button>
             </div>
 
             <!-- Task list -->
-            <TransitionGroup v-else tag="div" name="task" class="flex flex-col gap-2 relative">
-                <TaskCard v-for="task in tasks" :key="task.id" :task="task" @status-change="onStatusChange"
+            <TransitionGroup
+                v-else
+                tag="div"
+                name="task"
+                class="flex flex-col gap-2 relative transition-opacity duration-150"
+                :class="{ 'opacity-40 pointer-events-none': loading && tasks.length > 0 }"
+            >
+                <TaskCard v-for="task in sortedTasks" :key="task.id" :task="task" @status-change="onStatusChange"
                     @delete="deleteTask" />
             </TransitionGroup>
+            <!-- Carregar mais -->
+            <LoadMoreButton :visible="!!nextCursor" :loading="loading" @load="loadMore" />
         </template>
     </div>
 
@@ -80,6 +98,7 @@ import { useTask } from '../composables/useTask'
 import { useProjects } from '../composables/useProjects'
 import TaskCard from '../components/TaskCard.vue'
 import CreateTaskModal from '../components/CreateTaskModal.vue'
+import LoadMoreButton from '../components/LoadMoreButton.vue'
 import type { Task, TaskFilters } from '../types'
 
 const emit = defineEmits<{ 'project-name': [name: string] }>()
@@ -87,18 +106,32 @@ const emit = defineEmits<{ 'project-name': [name: string] }>()
 const route = useRoute()
 const projectId = computed(() => Number(route.params.id))
 
-const { tasks, loading, error, fetchTasks, updateTask, deleteTask } = useTask()
+const { tasks, loading, error, nextCursor, fetchTasks, loadMoreTasks, updateTask, deleteTask } = useTask()
+
+const sortedTasks = computed(() => [...tasks.value].sort((a, b) => {
+    if (a.status === 'done' && b.status !== 'done') return 1
+    if (a.status !== 'done' && b.status === 'done') return -1
+    return 0
+}))
 const { projects, fetchProjects } = useProjects()
 const showModal = ref(false)
 
 const filters = reactive({ status: '', priority: '', overdue: false })
 
-async function load() {
+function activeFilters(): TaskFilters {
     const params: TaskFilters = {}
-    if (filters.status) params.status = filters.status as TaskFilters['status']
+    if (filters.status)   params.status = filters.status as TaskFilters['status']
     if (filters.priority) params.priority = filters.priority as TaskFilters['priority']
-    if (filters.overdue) params.overdue = filters.overdue
-    await fetchTasks(projectId.value, params)
+    if (filters.overdue)  params.overdue = filters.overdue
+    return params
+}
+
+async function load() {
+    await fetchTasks(projectId.value, activeFilters())
+}
+
+async function loadMore() {
+    await loadMoreTasks(projectId.value, activeFilters())
 }
 
 async function onStatusChange(id: number, status: Task['status']) {
