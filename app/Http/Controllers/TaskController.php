@@ -52,7 +52,7 @@ class TaskController extends Controller
         return response()->json([
             'message' => 'Tarefa atualizada com sucesso.',
             'code'    => 200,
-            'data'    => new TaskResource($task),
+            'data'    => (new TaskResource($task))->only(['id', 'project_id', 'title', 'description', 'status', 'priority', 'due_date', 'is_overdue']),
         ], 200);
     }
 

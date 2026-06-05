@@ -22,6 +22,15 @@ class UpdateTaskRequest extends FormRequest
         ];
     }
 
+    public function withValidator($validator): void
+    {
+        $validator->after(function ($v) {
+            if (! $this->has('status') && ! $this->has('priority')) {
+                $v->errors()->add('body', 'É necessário fornecer pelo menos status ou priority.');
+            }
+        });
+    }
+
     public function messages(): array
     {
         return [

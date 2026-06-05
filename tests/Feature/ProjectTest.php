@@ -62,4 +62,37 @@ class ProjectTest extends TestCase
         $response->assertStatus(422)
             ->assertJsonStructure(['errors' => ['status']]);
     }
+
+    public function test_arquiva_projeto_ativo(): void
+    {
+        $project = Project::factory()->active()->create();
+
+        $response = $this->patchJson("/api/projects/{$project->id}", ['status' => 'archived']);
+
+        $response->assertStatus(200)
+            ->assertJsonPath('data.status', 'archived');
+
+        $this->assertDatabaseHas('projects', ['id' => $project->id, 'status' => 'archived']);
+    }
+
+    public function test_restaura_projeto_arquivado(): void
+    {
+        $project = Project::factory()->archived()->create();
+
+        $response = $this->patchJson("/api/projects/{$project->id}", ['status' => 'active']);
+
+        $response->assertStatus(200)
+            ->assertJsonPath('data.status', 'active');
+
+        $this->assertDatabaseHas('projects', ['id' => $project->id, 'status' => 'active']);
+    }
+
+    public function test_falha_ao_arquivar_projeto_com_status_invalido(): void
+    {
+        $project = Project::factory()->active()->create();
+
+        $this->patchJson("/api/projects/{$project->id}", ['status' => 'deleted'])
+            ->assertStatus(422)
+            ->assertJsonStructure(['errors' => ['status']]);
+    }
 }
